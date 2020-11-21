@@ -2,14 +2,21 @@
 <html lang="en">
 
 <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Photo Copier</title>
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <h1>Hi</h1>
+    <form id="form">
+        <h2>Existing Directory</h2>
+        <button name="existButton">Select</button>
+        <input type="text" name="exist">
+        <span id="form__exist-span">Not Selected</span>
+    </form>
 </body>
 
 </html>

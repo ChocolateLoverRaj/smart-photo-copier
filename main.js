@@ -5,11 +5,13 @@ const createWindow = () => {
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            enableRemoteModule: true
         }
     })
 
     win.loadFile('index.html')
+    win.webContents.openDevTools()
 }
 
 app.whenReady().then(createWindow)
