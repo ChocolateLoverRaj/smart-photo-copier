@@ -1,0 +1,25 @@
+{
+  "name": "smart-photo-copier",
+  "version": "1.0.0",
+  "description": "Copy folders while avoiding duplicates.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "electromon ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChocolateLoverRaj/smart-photo-copier.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChocolateLoverRaj/smart-photo-copier/issues"
+  },
+  "homepage": "https://github.com/ChocolateLoverRaj/smart-photo-copier#readme",
+  "devDependencies": {
+    "electromon": "^1.0.10",
+    "electron": "^11.0.2"
+  }
+}
