@@ -21,5 +21,9 @@
   "devDependencies": {
     "electromon": "^1.0.10",
     "electron": "^11.0.2"
+  },
+  "dependencies": {
+    "fs-extra": "^9.0.1",
+    "recursive-readdir-async": "^1.1.8"
   }
 }

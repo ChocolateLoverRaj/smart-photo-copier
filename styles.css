@@ -2,13 +2,21 @@ body {
     background-color: white;
 }
 
+#steps>li.in-progress {
+    color: gold;
+}
+
+#steps>li.complete {
+    color: green
+}
+
 #grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     text-align: center;
 }
 
-#grid > textarea {
+#grid>textarea {
     resize: none;
     height: 150px;
 }
