@@ -79,12 +79,6 @@ Object.values(dirs).forEach(dir => {
     dir.input.addEventListener('input', checkDirectory)
 })
 
-// TODO: remove this
-form.exist.value = 'C:/users/jui/documents/github/smart-photo-copier/test/dest'
-form.src.value = 'C:/users/jui/documents/github/smart-photo-copier/test/src/b'
-form.dest.value = 'C:/users/jui/documents/github/smart-photo-copier/test/dest/b'
-form.copy.disabled = false
-
 let currentStep = 0
 const filesCopied = new Set()
 const duplicateFiles = new Set()

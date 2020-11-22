@@ -1,26 +1,30 @@
 {
   "name": "smart-photo-copier",
+  "private": true,
   "version": "1.0.0",
   "description": "Copy folders while avoiding duplicates.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "start:dev": "electromon ."
+    "start:dev": "electromon .",
+    "build": "electron-packager . smart-photo-copier --platform=win32 --app-copyright=MIT --executable-name=\"Smart Photo Copier\" --overwrite && node build.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ChocolateLoverRaj/smart-photo-copier.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Rajas paranjpe",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ChocolateLoverRaj/smart-photo-copier/issues"
   },
   "homepage": "https://github.com/ChocolateLoverRaj/smart-photo-copier#readme",
   "devDependencies": {
+    "archiver": "^5.1.0",
     "electromon": "^1.0.10",
-    "electron": "^11.0.2"
+    "electron": "^11.0.2",
+    "electron-packager": "^15.1.0"
   },
   "dependencies": {
     "fs-extra": "^9.0.1",
