@@ -1,6 +1,7 @@
 {
   "private": true,
   "main": "index.js",
+  "name": "hash-files",
   "dependencies": {
     "env-paths": "^2.2.1",
     "make-dir": "^3.1.0",

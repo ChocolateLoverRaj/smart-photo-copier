@@ -26,7 +26,16 @@
         <button name="destButton">Select</button>
         <input type="text" name="dest">
         <span id="form__dest-span">Not Selected</span>
+
         <br><br>
+
+        <label>
+            <input name="compareContents" type="checkbox" id="form__compare-contents">
+            Compare duplicate file contents
+        </label>
+
+        <br><br>
+
         <button name="copy" disabled>Smart Copy</button>
     </form>
     <div id="progress" class="hidden">
@@ -36,12 +45,15 @@
             <li>Copy unique files</li>
         </ul>
         <div id="grid">
+            <h2 id="grid__checking">0</h2>
             <h2 id="grid__copied">0</h2>
             <h2 id="grid__duplicate">0</h2>
             <h2 id="grid__remaining">0</h2>
+            <h2>Files being checked if they're duplicates</h2>
             <h2>Files Copied</h2>
             <h2>Duplicate Files</h2>
             <h2>Files Remaining</h2>
+            <textarea id="grid__checking-list" disabled></textarea>
             <textarea id="grid__copied-list" disabled></textarea>
             <textarea id="grid__duplicate-list" disabled></textarea>
             <textarea id="grid__remaining-list" disabled></textarea>

@@ -2,16 +2,19 @@ const { dialog } = require('electron').remote
 const { list: recursiveReaddir } = require('recursive-readdir-async')
 const fsExtra = require('fs-extra')
 const fs = require('fs')
-const { join, basename, dirname } = require('path')
+const { posix: { join, basename, dirname } } = require('path')
+const getHash = require('hash-files')
 
 const form = document.getElementById('form')
 const existSpan = document.getElementById('form__exist-span')
 const srcSpan = document.getElementById('form__src-span')
 const destSpan = document.getElementById('form__dest-span')
 const progressDiv = document.getElementById('progress')
+const gridChecking = document.getElementById('grid__checking')
 const gridCopied = document.getElementById('grid__copied')
 const gridDuplicate = document.getElementById('grid__duplicate')
 const gridRemaining = document.getElementById('grid__remaining')
+const textareaChecking = document.getElementById('grid__checking-list')
 const textareaCopied = document.getElementById('grid__copied-list')
 const textareaDuplicate = document.getElementById('grid__duplicate-list')
 const textareaRemaining = document.getElementById('grid__remaining-list')
@@ -80,6 +83,7 @@ Object.values(dirs).forEach(dir => {
 })
 
 let currentStep = 0
+const filesChecking = new Set()
 const filesCopied = new Set()
 const duplicateFiles = new Set()
 const remainingFiles = new Set()
@@ -94,9 +98,11 @@ const updateProgress = () => {
             elem.classList.add('in-progress')
         }
     }
+    gridChecking.innerText = filesChecking.size
     gridCopied.innerText = filesCopied.size
     gridDuplicate.innerText = duplicateFiles.size
     gridRemaining.innerText = remainingFiles.size
+    textareaChecking.innerHTML = [...filesChecking].join('\n')
     textareaCopied.innerHTML = [...filesCopied].join('\n')
     textareaDuplicate.innerHTML = [...duplicateFiles].join('\n')
     textareaRemaining.innerHTML = [...remainingFiles].join('\n')
@@ -105,11 +111,13 @@ const updateProgress = () => {
 const disable = disable => {
     // Disable copy button
     form.copy.disabled = disable
-    // Disable everything
+    // Disable folder inputs
     for (const { button, input } of Object.values(dirs)) {
         button.disabled = disable
         input.disabled = disable
     }
+    // Disable compare contents button
+    form.compareContents.disabled = disable
 }
 
 form.copy.addEventListener('click', async () => {
@@ -124,9 +132,10 @@ form.copy.addEventListener('click', async () => {
     remainingFiles.clear()
     updateProgress()
     // Read the exist dir
-    const readExist = recursiveReaddir(form.exist.value)
-    const readSrc = recursiveReaddir(form.src.value)
-    await Promise.all([readExist, readSrc])
+    const [readExist, readSrc] = await Promise.all([
+        recursiveReaddir(form.exist.value),
+        recursiveReaddir(form.src.value)
+    ])
     currentStep++
     updateProgress()
     // Copy time
@@ -141,27 +150,54 @@ form.copy.addEventListener('click', async () => {
         const promise = (async () => {
             const parts = path.split('/')
             if (parts.length > 1) {
-                await createDir([].concat(...parts.slice(0, parts.length - 1)))
+                await createDir(parts.slice(0, -1).join('/'))
             }
             await fsExtra.ensureDir(join(form.dest.value, path))
         })()
         createDirs.set(path, promise)
         return promise
     }
-    const existFiles = new Set((await readExist).map(({ name }) => name));
-    await Promise.all((await readSrc).map(async ({ fullname: path }) => {
+    const existFiles = new Map(readExist.map(({ fullname, name }) => [name, fullname]))
+    console.log(existFiles)
+    await Promise.all(readSrc.map(async ({ fullname: path }) => {
         const relativePath = path.slice(form.src.value.length + 1)
-        if (existFiles.has(basename(relativePath))) {
-            duplicateFiles.add(relativePath)
+        const relativePathFile = basename(relativePath)
+        const absolutePath = existFiles.get(relativePathFile)
+        let renamedPath
+        if (absolutePath) {
+            if (!form.compareContents.checked) {
+                duplicateFiles.add(relativePath)
+                updateProgress()
+                return
+            }
+            filesChecking.add(relativePath)
             updateProgress()
-            return
+            const [existing, duplicateNamed] = await Promise.all([
+                getHash(absolutePath),
+                getHash(path)
+            ])
+            filesChecking.delete(relativePath)
+            if (existing.compare(duplicateNamed) === 0) {
+                duplicateFiles.add(relativePath)
+                updateProgress()
+                return
+            } else {
+                console.log(relativePath, existing, duplicateNamed, existing.compare(duplicateNamed))
+            }
+            let renamedFile = relativePathFile
+            for (let i = 1; existFiles.has(renamedFile); i++) {
+                renamedFile = `${relativePathFile} (${i})`
+            }
+            renamedPath = join(dirname(relativePath), renamedFile)
         }
-        remainingFiles.add(relativePath)
+        // TODO: Chang name of file when copying
+        const shownPath = `${relativePath}${renamedPath ? ` -> ${renamedPath}` : ''}`
+        remainingFiles.add(shownPath)
         updateProgress()
         await createDir(dirname(relativePath))
-        await fs.promises.copyFile(path, join(form.dest.value, relativePath))
-        remainingFiles.delete(relativePath)
-        filesCopied.add(relativePath)
+        await fs.promises.copyFile(path, join(form.dest.value, renamedPath ?? relativePath))
+        remainingFiles.delete(shownPath)
+        filesCopied.add(shownPath)
         updateProgress()
     }))
     currentStep++
