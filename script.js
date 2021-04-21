@@ -2,7 +2,7 @@ const { dialog } = require('electron').remote
 const { list: recursiveReaddir } = require('recursive-readdir-async')
 const fsExtra = require('fs-extra')
 const fs = require('fs')
-const { posix: { join, basename, dirname } } = require('path')
+const { posix: { join, basename, dirname, extname } } = require('path')
 const getHash = require('hash-files')
 
 const form = document.getElementById('form')
@@ -184,9 +184,11 @@ form.copy.addEventListener('click', async () => {
             } else {
                 console.log(relativePath, existing, duplicateNamed, existing.compare(duplicateNamed))
             }
+            const relativePathFileExtname = extname(relativePathFile)
+            const relativePathFileBasename = basename(relativePathFile, relativePathFileExtname)
             let renamedFile = relativePathFile
             for (let i = 1; existFiles.has(renamedFile); i++) {
-                renamedFile = `${relativePathFile} (${i})`
+                renamedFile = `${relativePathFileBasename} (${i})${relativePathFileExtname}`
             }
             renamedPath = join(dirname(relativePath), renamedFile)
         }
