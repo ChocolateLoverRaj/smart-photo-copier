@@ -163,10 +163,12 @@ form.copy.addEventListener('click', async () => {
     await Promise.all(readSrc.map(async ({ fullname: srcFilePath }) => {
         const relativePath = relative(form.src.value, srcFilePath)
         const srcFileHash = await getHash(srcFilePath)
-        if ((await Promise.all(readExist.map(async ({ fullname: existFilePath }) => (
+        const duplicateOf = (await Promise.all(readExist.map(async ({ fullname: existFilePath }) => (
             srcFileHash.compare(await getHash(existFilePath)) === 0
-        )))).includes(true)) {
-            duplicateFiles.add(relativePath)
+        )))).indexOf(true)
+        if (duplicateOf !== -1) {
+            const relativeDuplicatePath = relative(form.dest.value, readExist[duplicateOf].fullname)
+            duplicateFiles.add(`${relativePath} - duplicate of ${relativeDuplicatePath}`)
             updateProgress()
             return
         }
