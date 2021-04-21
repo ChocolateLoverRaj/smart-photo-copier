@@ -2,7 +2,8 @@ const { dialog } = require('electron').remote
 const { list: recursiveReaddir } = require('recursive-readdir-async')
 const fsExtra = require('fs-extra')
 const fs = require('fs')
-const { join, basename, dirname } = require('path')
+const { join, basename, dirname, extname, relative } = require('path')
+const getHash = require('hash-files')
 
 const form = document.getElementById('form')
 const existSpan = document.getElementById('form__exist-span')
@@ -112,6 +113,16 @@ const disable = disable => {
     }
 }
 
+const exists = async path => {
+    try {
+        await fs.promises.access(path)
+        return true
+    } catch (e) {
+        if (e.code !== 'ENOENT') throw e
+    }
+    return false
+}
+
 form.copy.addEventListener('click', async () => {
     // Disable everything
     disable(true)
@@ -124,9 +135,10 @@ form.copy.addEventListener('click', async () => {
     remainingFiles.clear()
     updateProgress()
     // Read the exist dir
-    const readExist = recursiveReaddir(form.exist.value)
-    const readSrc = recursiveReaddir(form.src.value)
-    await Promise.all([readExist, readSrc])
+    const [readExist, readSrc] = await Promise.all([
+        recursiveReaddir(form.exist.value),
+        recursiveReaddir(form.src.value)
+    ])
     currentStep++
     updateProgress()
     // Copy time
@@ -148,20 +160,34 @@ form.copy.addEventListener('click', async () => {
         createDirs.set(path, promise)
         return promise
     }
-    const existFiles = new Set((await readExist).map(({ name }) => name));
-    await Promise.all((await readSrc).map(async ({ fullname: path }) => {
-        const relativePath = path.slice(form.src.value.length + 1)
-        if (existFiles.has(basename(relativePath))) {
+    await Promise.all(readSrc.map(async ({ fullname: srcFilePath }) => {
+        const relativePath = relative(form.src.value, srcFilePath)
+        const srcFileHash = await getHash(srcFilePath)
+        if ((await Promise.all(readExist.map(async ({ fullname: existFilePath }) => (
+            srcFileHash.compare(await getHash(existFilePath)) === 0
+        )))).includes(true)) {
             duplicateFiles.add(relativePath)
             updateProgress()
             return
         }
         remainingFiles.add(relativePath)
         updateProgress()
-        await createDir(dirname(relativePath))
-        await fs.promises.copyFile(path, join(form.dest.value, relativePath))
+        const destExt = extname(srcFilePath)
+        const destBasename = basename(srcFilePath)
+        const relativePathDirname = dirname(relativePath)
+        let destBasenameToUse = destBasename
+        let destPathToUse
+        for (let i = 2; await exists(destPathToUse = join(form.dest.value, relativePathDirname, destBasenameToUse)); i++) {
+            destBasenameToUse = `${destBasename} (${i})${destExt}`
+        }
+        await createDir(relativePathDirname)
+        await fs.promises.copyFile(srcFilePath, destPathToUse)
         remainingFiles.delete(relativePath)
-        filesCopied.add(relativePath)
+        const copiedFileShown = relativePath + (destBasenameToUse !== relativePath
+            ? ` --> ${destBasenameToUse}`
+            : ''
+        )
+        filesCopied.add(copiedFileShown)
         updateProgress()
     }))
     currentStep++
