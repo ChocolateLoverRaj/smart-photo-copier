@@ -175,12 +175,12 @@ form.copy.addEventListener('click', async () => {
         remainingFiles.add(relativePath)
         updateProgress()
         const destExt = extname(srcFilePath)
-        const destBasename = basename(srcFilePath)
+        const destBasename = basename(srcFilePath, destExt)
         const relativePathDirname = dirname(relativePath)
-        let destBasenameToUse = destBasename
+        let destBasenameToUse = `${destBasename}${destExt}`
         let destPathToUse
         for (let i = 2; await exists(destPathToUse = join(form.dest.value, relativePathDirname, destBasenameToUse)); i++) {
-            destBasenameToUse = `${destBasename} (${i})${destExt}`
+            destBasenameToUse = `${destBasename}_${i}${destExt}`
         }
         await createDir(relativePathDirname)
         await fs.promises.copyFile(srcFilePath, destPathToUse)
