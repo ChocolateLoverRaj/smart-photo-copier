@@ -1,5 +1,9 @@
 body {
     background-color: white;
+    font-family: Comic Sans Ms;
+    margin-top: 30px;
+    margin-right: 50px;
+    margin-left: 50px;
 }
 
 #steps>li.in-progress {
