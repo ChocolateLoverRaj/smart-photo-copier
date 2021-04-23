@@ -1,7 +1,7 @@
 {
   "name": "smart-photo-copier",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Copy folders while avoiding duplicates.",
   "main": "main.js",
   "scripts": {
