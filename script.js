@@ -4,6 +4,9 @@ const fsExtra = require('fs-extra')
 const fs = require('fs')
 const { join, basename, dirname, extname, relative } = require('path')
 const getHash = require('hash-files')
+const forEachLimit = require('async/forEachLimit')
+
+const parallelCopyLimit = 100
 
 const form = document.getElementById('form')
 const existSpan = document.getElementById('form__exist-span')
@@ -160,7 +163,7 @@ form.copy.addEventListener('click', async () => {
         createDirs.set(path, promise)
         return promise
     }
-    await Promise.all(readSrc.map(async ({ fullname: srcFilePath }) => {
+    await forEachLimit(readSrc, parallelCopyLimit, async ({ fullname: srcFilePath }) => {
         const relativePath = relative(form.src.value, srcFilePath)
         const srcFileHash = await getHash(srcFilePath)
         const duplicateOf = (await Promise.all(readExist.map(async ({ fullname: existFilePath }) => (
@@ -191,7 +194,7 @@ form.copy.addEventListener('click', async () => {
         )
         filesCopied.add(copiedFileShown)
         updateProgress()
-    }))
+    })
     currentStep++
     updateProgress()
     disable(false)

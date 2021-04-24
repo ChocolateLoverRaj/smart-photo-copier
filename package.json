@@ -27,6 +27,7 @@
     "electron-packager": "^15.1.0"
   },
   "dependencies": {
+    "async": "^3.2.0",
     "fs-extra": "^9.0.1",
     "hash-files": "file:hash-files",
     "recursive-readdir-async": "^1.1.8"
