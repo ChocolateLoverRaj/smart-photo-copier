@@ -1,10 +1,11 @@
 const { createHash } = require('crypto')
 const envPaths = require('env-paths')
 const makeDir = require('make-dir')
-const { join, normalize } = require('path')
+const { join } = require('path')
 const fs = require('fs')
 const events = require('events')
 const throttleAsyncFn = require('throttle-async-function')
+const normalize = require('./normalize')
 
 const paths = envPaths('hash-files')
 const cachePath = paths.cache
@@ -63,6 +64,9 @@ const getHash = throttleAsyncFn(async path => {
   // TODO: No need to read again from file if we just wrote to it
   // Read the hash file
   return await fs.promises.readFile(hashFilePath)
+}, {
+  // Only check hash once after process is started
+  cacheRefreshPeriod: Infinity
 })
 
 // TODO: Also make a function that copies the hash of a file to another file
