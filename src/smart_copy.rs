@@ -1,21 +1,33 @@
-use std::path::Path;
+use std::path::PathBuf;
 
-use crate::fs::FS;
+use crate::async_fs::AsyncFs;
 
-pub async fn smart_copy<F>(_fs: F, from: &Path, to: &Path, check: &Path)
-where
-    F: FS,
-{
+pub struct SmartCopyOptions {
+    source: PathBuf,
+    destination: PathBuf,
+    check: PathBuf,
+}
+
+impl SmartCopyOptions {
+    async fn smart_copy(&self, fs: &impl AsyncFs) {
+        fs.read_dir(&self.check).await;
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::mock_fs::MockFS;
+    use crate::mock_fs::MockFs;
 
     use super::*;
 
     #[tokio::test]
     async fn it_works() {
-        smart_copy(MockFS::new(), "a".as_ref(), "b".as_ref(), "c".as_ref()).await;
+        SmartCopyOptions {
+            source: "a".into(),
+            destination: "b".into(),
+            check: "c".into(),
+        }
+        .smart_copy(&MockFs::new())
+        .await;
     }
 }
