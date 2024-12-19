@@ -1,0 +1,9 @@
+[package]
+name = "gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+floem = { version = "0.2.0", features = ["rfd-async-std"] }
+smart-photo-copier = { version = "0.1.0", path = "../smart-copy" }
+tokio = { version = "1", features = ["full"] }

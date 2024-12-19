@@ -1,12 +1,3 @@
-[package]
-name = "smart-photo-copier"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-dashmap = "6.1.0"
-futures = "0.3.31"
-tokio = { version = "1", features = ["full"] }
-tokio-stream = { version = "0.1.17", features = ["full"] }
+[workspace]
+resolver = "2"
+members = ["smart-copy", "gui"]

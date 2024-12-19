@@ -21,9 +21,20 @@
             (rust-bin.stable.latest.default.override {
   extensions = [ "rust-src" ];
   })
+            nil
+            nixd
+    wayland
           ];
+
+
+          RUSTFLAGS="-lwayland-client";
+
+          LD_LIBRARY_PATH = lib.makeLibraryPath [
+                        libxkbcommon
+                        vulkan-loader
+                      ];
+
         };
       }
     );
 }
-
