@@ -1,6 +1,6 @@
-use std::{ffi::OsString, fmt::Debug, future::Future, io, path::Path};
+use std::{ffi::OsString, fmt::Debug, io, path::Path, time::SystemTime};
 
-use futures::{future::BoxFuture, FutureExt, Stream};
+use futures::{future::BoxFuture, stream::BoxStream, FutureExt};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FileType {
@@ -20,9 +20,25 @@ impl From<std::fs::FileType> for FileType {
     }
 }
 
+pub trait Metadata: Debug {
+    fn len(&self) -> u64;
+    fn modified(&self) -> io::Result<SystemTime>;
+}
+
+impl Metadata for std::fs::Metadata {
+    fn len(&self) -> u64 {
+        self.len()
+    }
+
+    fn modified(&self) -> io::Result<SystemTime> {
+        self.modified()
+    }
+}
+
 pub trait DirEntry: Debug + Send + Sync {
     fn file_type(&self) -> BoxFuture<io::Result<FileType>>;
     fn file_name(&self) -> OsString;
+    fn metadata(&self) -> BoxFuture<io::Result<Box<dyn Metadata>>>;
 }
 
 impl DirEntry for tokio::fs::DirEntry {
@@ -33,13 +49,20 @@ impl DirEntry for tokio::fs::DirEntry {
     fn file_name(&self) -> OsString {
         self.file_name()
     }
+
+    fn metadata(&self) -> BoxFuture<io::Result<Box<dyn Metadata>>> {
+        async {
+            self.metadata()
+                .await
+                .map(|metadata| Box::new(metadata) as Box<dyn Metadata>)
+        }
+        .boxed()
+    }
 }
 
 pub trait AsyncFs {
     fn read_dir(
         &self,
         path: impl AsRef<Path>,
-    ) -> impl Future<
-        Output = io::Result<impl Stream<Item = io::Result<Box<dyn DirEntry>>> + Send + 'static>,
-    > + Send;
+    ) -> BoxFuture<'static, io::Result<BoxStream<'static, io::Result<Box<dyn DirEntry>>>>>;
 }

@@ -1,16 +1,22 @@
 use std::{
     collections::HashMap,
     ffi::OsString,
+    future,
     io::{self, ErrorKind},
     path::{Component, Path},
     sync::Arc,
+    time::SystemTime,
 };
 
-use futures::{stream, FutureExt};
+use futures::{
+    future::BoxFuture,
+    stream::{self, BoxStream},
+    FutureExt, StreamExt,
+};
 use tokio::sync::RwLock;
 
 use crate::{
-    async_fs::{AsyncFs, DirEntry, FileType},
+    async_fs::{AsyncFs, DirEntry, FileType, Metadata},
     fs::FS,
 };
 
@@ -20,12 +26,20 @@ pub enum FileOrFolder {
     Folder(Arc<RwLock<HashMap<OsString, FileOrFolder>>>),
 }
 
+pub fn file(contents: Vec<u8>) -> FileOrFolder {
+    FileOrFolder::File(Arc::new(RwLock::new(contents)))
+}
+
 pub fn empty_file() -> FileOrFolder {
-    FileOrFolder::File(Default::default())
+    file(Default::default())
 }
 
 pub fn folder(folder: HashMap<OsString, FileOrFolder>) -> FileOrFolder {
     FileOrFolder::Folder(Arc::new(RwLock::new(folder)))
+}
+
+pub fn empty_folder() -> FileOrFolder {
+    folder(Default::default())
 }
 
 #[derive(Debug, Clone)]
@@ -60,11 +74,7 @@ impl AsyncFs for MockFs {
     fn read_dir(
         &self,
         path: impl AsRef<Path>,
-    ) -> impl std::future::Future<
-        Output = io::Result<
-            impl stream::Stream<Item = io::Result<Box<dyn DirEntry>>> + Send + 'static,
-        >,
-    > + Send {
+    ) -> BoxFuture<'static, io::Result<BoxStream<'static, io::Result<Box<dyn DirEntry>>>>> {
         let path = path.as_ref().to_owned();
         let fs = self.clone();
         async move {
@@ -132,7 +142,8 @@ impl AsyncFs for MockFs {
                                 name: k.to_owned(),
                             }) as Box<dyn DirEntry>)
                         }),
-                    )),
+                    )
+                    .boxed()),
                 },
             }
         }
@@ -152,10 +163,39 @@ impl DirEntry for MockDirEntry {
             FileOrFolder::File(_) => FileType::File,
             FileOrFolder::Folder(_) => FileType::Dir,
         });
-        async { value }.boxed()
+        future::ready(value).boxed()
     }
 
     fn file_name(&self) -> OsString {
         self.name.clone()
+    }
+
+    fn metadata(&self) -> BoxFuture<io::Result<Box<dyn Metadata>>> {
+        let file_or_folder = self.file_or_folder.clone();
+        async {
+            Ok(Box::new(MockMetadata {
+                len: match file_or_folder {
+                    FileOrFolder::File(file) => file.read().await.len() as u64,
+                    FileOrFolder::Folder(_) => 0,
+                },
+            }) as Box<_>)
+        }
+        .boxed()
+    }
+}
+
+#[derive(Debug)]
+struct MockMetadata {
+    len: u64,
+}
+
+impl Metadata for MockMetadata {
+    fn len(&self) -> u64 {
+        self.len
+    }
+
+    fn modified(&self) -> io::Result<std::time::SystemTime> {
+        // TODO: Mock last modified
+        Ok(SystemTime::UNIX_EPOCH)
     }
 }

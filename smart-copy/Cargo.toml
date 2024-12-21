@@ -1,5 +1,5 @@
 [package]
-name = "smart-photo-copier"
+name = "smart-copy"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,9 +7,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
+blake3 = { version = "1.5.5", features = ["serde"] }
 crossbeam = { version = "0.8.4", features = ["crossbeam-queue"] }
 dashmap = "6.1.0"
 futures = "0.3.31"
 postcard = { version = "1.1.1", features = ["use-std"] }
+serde = { version = "1.0.216", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["full"] }
